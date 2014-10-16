@@ -1,5 +1,7 @@
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.InetAddress;
@@ -8,12 +10,15 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MyServer {
 
 	//InetAddress infoip;
-	String message = "";
-	ServerSocket serverSocket = null;
+	private String message = "";
+	private ServerSocket serverSocket = null;
+	private List<Object> list = new ArrayList<>();
 
 	public MyServer() {
 	/*	try {
@@ -26,32 +31,32 @@ public class MyServer {
 	}
 
 	protected class SocketServerThread extends Thread {
-
+		ObjectInputStream in = null;
 		static final int SocketServerPORT = 8080;
-		int count = 0;
-
+		
 		public void run() {
 			Socket socket = null;
 			try {
 				serverSocket = new ServerSocket(SocketServerPORT);
 				System.out.println("Server waiting..");
-
+				
 				while (true) {
 					socket = serverSocket.accept();
-					/*
-					 * count++; message += "#" + count + " from " +
-					 * socket.getInetAddress() + ":" + socket.getPort() + "\n";
-					 */
+					System.out.println("Client detected");
+					//in = new ObjectInputStream(socket.getInputStream());
+					//list.add(in.readObject());
 					message += "From " + socket.getInetAddress() + ":"
 							+ socket.getPort() + "\n";
-
+					System.out.println(message);
 					SocketServerReplyThread socketServerReplyThread = new SocketServerReplyThread(
-							socket, count);
+							socket);
 					socketServerReplyThread.run();
 
 				}
 			} catch (IOException e) {
-
+				e.printStackTrace();
+		//	} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} finally {
 				if (serverSocket != null) {
@@ -68,6 +73,13 @@ public class MyServer {
 						e.printStackTrace();
 					}
 				}
+				if(in != null){
+					try {
+						in.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
 			}
 		}
 
@@ -76,26 +88,17 @@ public class MyServer {
 	private class SocketServerReplyThread extends Thread {
 
 		private Socket hostThreadSocket;
-		//int cnt;
 
-		SocketServerReplyThread(Socket socket, int c) {
+		SocketServerReplyThread(Socket socket) {
 			hostThreadSocket = socket;
-			//cnt = c;
 		}
 
 		public void run() {
-			// OutputStream outputStream;
 			DataOutputStream out = null;
-			// String msgReply = "Hello from Android, you are #" + cnt;
 			String msgReply = "Synchronization complete";
 			try {
 				out = new DataOutputStream(hostThreadSocket.getOutputStream());
 				out.writeUTF(msgReply);
-				/*
-				 * outputStream = hostThreadSocket.getOutputStream();
-				 * PrintStream printStream = new PrintStream(outputStream);
-				 * printStream.print(msgReply); printStream.close();
-				 */
 				message += "replayed: " + msgReply + "\n";
 
 			} catch (IOException e) {
@@ -127,24 +130,4 @@ public class MyServer {
 	}
 
 }
-/*
- * private String getIpAddress() { String ip = ""; try {
- * Enumeration<NetworkInterface> enumNetworkInterfaces = NetworkInterface
- * .getNetworkInterfaces(); while (enumNetworkInterfaces.hasMoreElements()) {
- * NetworkInterface networkInterface = enumNetworkInterfaces .nextElement();
- * Enumeration<InetAddress> enumInetAddress = networkInterface
- * .getInetAddresses(); while (enumInetAddress.hasMoreElements()) { InetAddress
- * inetAddress = enumInetAddress.nextElement();
- * 
- * if (inetAddress.isSiteLocalAddress()) { ip += "SiteLocalAddress: " +
- * inetAddress.getHostAddress() + "\n"; }
- * 
- * }
- * 
- * }
- * 
- * } catch (SocketException e) { // TODO Auto-generated catch block
- * e.printStackTrace(); ip += "Something Wrong! " + e.toString() + "\n"; }
- * 
- * return ip; }
- */
+
